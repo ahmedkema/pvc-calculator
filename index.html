@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1f2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="خلطة PVC">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>حاسبة تكلفة خلطة PVC</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #1a1f2e;
+    color: #e0e6f0;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #7dd3fc;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 28px;
+  }
+
+  .card {
+    background: #242b3d;
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #2e3a50;
+  }
+
+  .card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    background: #1a1f2e;
+    padding: 10px 8px;
+    font-size: 0.8rem;
+    color: #7dd3fc;
+    font-weight: 600;
+    border-bottom: 2px solid #2e3a50;
+  }
+
+  tbody tr { border-bottom: 1px solid #2e3a50; transition: background 0.15s; }
+  tbody tr:hover { background: #2a3347; }
+  tbody td { padding: 8px 6px; font-size: 0.9rem; vertical-align: middle; }
+
+  /* Wide name column */
+  .col-name { width: 55%; }
+  .col-phr  { width: 22%; }
+  .col-price{ width: 18%; }
+  .col-del  { width: 36px; text-align: center; }
+
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    background: #1a1f2e;
+    border: 1px solid #2e3a50;
+    border-radius: 7px;
+    color: #e0e6f0;
+    padding: 7px 9px;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  input:focus { border-color: #7dd3fc; }
+
+  .btn-del {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .btn-del:hover { background: #3d1c1c; }
+
+  .btn-add {
+    margin-top: 14px;
+    background: #1e3a5f;
+    border: 1px dashed #7dd3fc;
+    color: #7dd3fc;
+    border-radius: 9px;
+    padding: 9px 18px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+    font-family: inherit;
+  }
+  .btn-add:hover { background: #1e4a7a; }
+
+  /* Results */
+  .result-card {
+    background: linear-gradient(135deg, #0f2744 0%, #1a3a5c 100%);
+    border: 1.5px solid #7dd3fc44;
+    border-radius: 14px;
+    padding: 22px 20px;
+    margin-bottom: 20px;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .result-item {
+    background: #1a1f2e;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .result-label { font-size: 0.75rem; color: #64748b; margin-bottom: 6px; }
+
+  .result-value { font-size: 1.35rem; font-weight: 700; color: #7dd3fc; }
+  .result-value.highlight { color: #34d399; font-size: 1.5rem; }
+  .result-value.warn { color: #fbbf24; }
+
+  .flex-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .flex-row label { font-size: 0.85rem; color: #94a3b8; white-space: nowrap; }
+  .flex-row input { width: 90px; flex-shrink: 0; }
+
+  .batch-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .batch-row label { font-size: 0.85rem; color: #94a3b8; white-space: nowrap; }
+  .batch-row input { width: 120px; flex-shrink: 0; }
+
+  .divider { height: 1px; background: #2e3a50; margin: 16px 0; }
+
+  /* Collapsible mfg section */
+  .section-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    padding: 8px 0;
+  }
+  .section-toggle:hover .toggle-label { color: #7dd3fc; }
+  .toggle-label { font-size: 0.82rem; color: #94a3b8; font-weight: 600; letter-spacing: 0.5px; }
+  .toggle-arrow { font-size: 0.75rem; color: #64748b; transition: transform 0.2s; }
+  .toggle-arrow.open { transform: rotate(180deg); }
+  .collapsible { overflow: hidden; max-height: 0; transition: max-height 0.3s ease; }
+  .collapsible.open { max-height: 200px; }
+
+  /* Save/load */
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .btn-action {
+    flex: 1;
+    min-width: 110px;
+    padding: 10px;
+    border-radius: 9px;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: opacity 0.2s;
+  }
+  .btn-action:hover { opacity: 0.85; }
+  .btn-save   { background: #1e4a2e; color: #34d399; border: 1px solid #34d39966; }
+  .btn-load   { background: #1e3a5f; color: #7dd3fc; border: 1px solid #7dd3fc66; }
+  .btn-export { background: #3a2a0a; color: #fbbf24; border: 1px solid #fbbf2466; }
+  .btn-clear  { background: #3d1c1c; color: #ef4444; border: 1px solid #ef444466; }
+
+  /* Saved mixes list */
+  .mix-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .mix-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1a1f2e;
+    border: 1px solid #2e3a50;
+    border-radius: 9px;
+    padding: 9px 12px;
+    gap: 8px;
+  }
+  .mix-item-name { font-size: 0.88rem; color: #e0e6f0; flex: 1; }
+  .mix-item-btns { display: flex; gap: 6px; }
+  .btn-mini {
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+  }
+  .btn-mini-load { background: #1e3a5f; color: #7dd3fc; }
+  .btn-mini-del  { background: #3d1c1c; color: #ef4444; }
+
+  .empty-msg { font-size: 0.82rem; color: #64748b; text-align: center; padding: 10px 0; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e4a2e;
+    color: #34d399;
+    border: 1px solid #34d39966;
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 9999;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .modal-box {
+    margin: 40px auto;
+    background: #242b3d;
+    border: 1px solid #2e3a50;
+    border-radius: 16px;
+    padding: 22px 20px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #7dd3fc;
+    margin-bottom: 16px;
+  }
+  .modal-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #2e3a5044;
+    font-size: 0.85rem;
+  }
+  .modal-row:last-child { border-bottom: none; }
+  .modal-key { color: #64748b; }
+  .modal-val { color: #e0e6f0; font-weight: 600; text-align: left; max-width: 60%; word-break: break-word; }
+  .modal-section { font-size: 0.75rem; color: #7dd3fc88; margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .btn-modal-close {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px;
+    background: #1a1f2e;
+    border: 1px solid #2e3a50;
+    border-radius: 9px;
+    color: #94a3b8;
+    font-size: 0.88rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-mini-dup  { background: #1e3a2e; color: #34d399; }
+  .btn-mini-info { background: #1e2a3f; color: #7dd3fc; }
+</style>
+</head>
+<body>
+
+<h1>⚗️ حاسبة خلطة PVC</h1>
+<p class="subtitle">احسب سعر الطن بالجنيه</p>
+
+<!-- Settings -->
+<div class="card">
+  <div class="card-title">⚙️ إعدادات</div>
+  <div class="batch-row" style="margin-bottom:0;">
+    <label>اسم الخلطة:</label>
+    <input type="text" id="mixName" placeholder="مثال: PVC Pipe 63mm" style="flex:1; min-width:150px;">
+  </div>
+</div>
+<input type="hidden" id="batchKg" value="100">
+
+<!-- Ingredients Table -->
+<div class="card">
+  <div class="card-title">📦 مكونات الخلطة</div>
+  <table id="ingredientsTable">
+    <thead>
+      <tr>
+        <th class="col-name" style="text-align:right;">المكوّن</th>
+        <th class="col-phr">الكمية (phr)</th>
+        <th class="col-price">السعر/كجم</th>
+        <th class="col-del"></th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <button class="btn-add" onclick="addRow()">+ إضافة مكوّن</button>
+</div>
+
+<!-- Hidden calc fields -->
+<input type="hidden" id="totalPhr">
+<input type="hidden" id="costPerKg">
+<input type="hidden" id="depreciationAmt">
+<input type="hidden" id="tonBreakdown">
+<input type="hidden" id="sellTonPrice">
+<input type="hidden" id="profitAmt">
+
+<!-- Final ton price only -->
+<div class="result-card">
+  <div style="text-align:center;">
+    <div style="font-size:0.82rem; color:#64748b; margin-bottom:8px;">💰 سعر طن الخامة</div>
+    <div id="finalTonPrice" style="font-size:2.4rem; font-weight:800; color:#34d399; letter-spacing:1px;">0 ج.م</div>
+  </div>
+</div>
+
+<!-- Save / Load -->
+<div class="card">
+  <div class="card-title">💾 حفظ وتحميل الخلطات</div>
+  <div class="action-row">
+    <button class="btn-action btn-save" onclick="saveData()">💾 حفظ الخلطة</button>
+    <button class="btn-action btn-clear" onclick="clearAll()">🗑️ مسح الكل</button>
+  </div>
+  <div class="mix-list" id="mixList"></div>
+</div>
+
+<!-- Secret settings button at very bottom -->
+<div style="text-align:center; margin: 8px 0 4px;">
+  <button onclick="toggleSecret()" style="background:none; border:none; color:#2e3a50; font-size:0.7rem; cursor:pointer; padding:6px 12px; border-radius:6px; transition:color 0.2s;" onmouseover="this.style.color='#64748b'" onmouseout="this.style.color='#2e3a50'">
+    ⚙
+  </button>
+</div>
+
+<div id="secretPanel" style="display:none; margin-bottom:20px;">
+  <div class="card" style="border-color:#2e3a50aa;">
+    <div class="card-title" style="font-size:0.8rem;">🔧 إعدادات التكلفة</div>
+    <div style="display:flex; flex-direction:column; gap:14px;">
+
+      <div class="flex-row">
+        <label style="min-width:160px;">نسبة الهالك (%):</label>
+        <input type="number" id="depreciation" value="1" min="0" max="100" step="0.1" oninput="calculate()" style="width:90px;">
+      </div>
+
+      <div class="flex-row">
+        <label style="min-width:160px;">تكلفة التصنيع (ج.م/طن):</label>
+        <input type="number" id="mfgCost" value="5000" min="0" step="100" oninput="calculate()" style="width:90px;">
+      </div>
+
+      <div class="flex-row">
+        <label style="min-width:160px;">نسبة الربح (%):</label>
+        <input type="number" id="margin" value="15" min="0" max="200" oninput="calculate()" style="width:90px;">
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Details modal -->
+<div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+  <div class="modal-box" id="detailModalBox">
+    <div class="modal-title" id="detailModalTitle">تفاصيل الخلطة</div>
+    <div id="detailModalContent"></div>
+    <button class="btn-modal-close" onclick="closeDetailModal()">إغلاق</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE_KEY = 'pvcMixes_v2';
+
+const defaults = [
+  { name: "PVC Resin K67",           phr: 100, price: 0 },
+  { name: "CaCO3",                   phr: 5,   price: 0 },
+  { name: "TiO2",                    phr: 0.5, price: 0 },
+  { name: "Lead Stabilizer / Ca-Zn", phr: 3,   price: 0 },
+  { name: "Lubricant (Wax/Stearic)", phr: 1,   price: 0 },
+];
+
+/* ── Toggle secret panel ── */
+function toggleSecret() {
+  const p = document.getElementById('secretPanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+/* ── Table rows ── */
+function addRow(name='', phr='', price='') {
+  const tbody = document.getElementById('tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="col-name"><input type="text" placeholder="اسم المكوّن" value="${name}" oninput="calculate()"></td>
+    <td class="col-phr"><input type="number" placeholder="0" value="${phr}" min="0" step="0.01" oninput="calculate()"></td>
+    <td class="col-price"><input type="number" placeholder="0.00" value="${price}" min="0" step="0.01" oninput="calculate()"></td>
+    <td class="col-del"><button class="btn-del" onclick="delRow(this)" title="حذف">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculate();
+}
+
+function delRow(btn) {
+  btn.closest('tr').remove();
+  calculate();
+}
+
+/* ── Calculate ── */
+function calculate() {
+  const rows = document.querySelectorAll('#tbody tr');
+  const depreciation = parseFloat(document.getElementById('depreciation').value) || 0;
+  const mfgCost      = parseFloat(document.getElementById('mfgCost').value)      || 0;
+  const margin       = parseFloat(document.getElementById('margin').value)        || 0;
+  const batchKg      = parseFloat(document.getElementById('batchKg').value)       || 0;
+
+  let totalPhr = 0, weightedCost = 0;
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const phr   = parseFloat(inputs[1].value) || 0;
+    const price = parseFloat(inputs[2].value) || 0;
+    totalPhr     += phr;
+    weightedCost += phr * price;
+  });
+
+  const costPerKg      = totalPhr > 0 ? weightedCost / totalPhr : 0;
+  const rawMatTon      = costPerKg * 1000;
+  const depAmt         = rawMatTon * (depreciation / 100);
+  const finalTonPrice  = rawMatTon + depAmt + mfgCost;
+  const sellTonPrice   = finalTonPrice * (1 + margin / 100);
+  const profitPerTon   = sellTonPrice - finalTonPrice;
+
+  const fmt = n => Math.round(n).toLocaleString('ar-EG');
+
+  document.getElementById('totalPhr').textContent    = totalPhr.toFixed(2);
+  document.getElementById('costPerKg').textContent   = costPerKg.toFixed(2) + ' ج.م';
+  document.getElementById('depreciationAmt').textContent = depAmt > 0 ? `= ${fmt(depAmt)} ج.م/طن` : '';
+  document.getElementById('finalTonPrice').textContent   = fmt(sellTonPrice) + ' ج.م';
+  document.getElementById('tonBreakdown').textContent    =
+    `خامات ${fmt(rawMatTon)} + إهلاك ${fmt(depAmt)} + تصنيع ${fmt(mfgCost)}`;
+  document.getElementById('sellTonPrice').textContent = fmt(sellTonPrice) + ' ج.م';
+  document.getElementById('profitAmt').textContent   =
+    profitPerTon > 0 ? `← ربح ${fmt(profitPerTon)} ج.م/طن` : '';
+}
+
+/* ── Embedded storage (data lives inside the HTML file) ── */
+function getAllMixes() {
+  try { return JSON.parse(localStorage.getItem('pvcMixes_v2')) || {}; }
+  catch { return {}; }
+}
+
+function setAllMixes(obj) {
+  localStorage.setItem('pvcMixes_v2', JSON.stringify(obj));
+}
+
+function getData() {
+  const rows = document.querySelectorAll('#tbody tr');
+  const ingredients = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    ingredients.push({ name: inputs[0].value, phr: inputs[1].value, price: inputs[2].value });
+  });
+  return {
+    mixName:     document.getElementById('mixName').value,
+    batchKg:     document.getElementById('batchKg').value,
+    margin:      document.getElementById('margin').value,
+    depreciation:document.getElementById('depreciation').value,
+    mfgCost:     document.getElementById('mfgCost').value,
+    ingredients
+  };
+}
+
+function downloadUpdatedFile() {
+  // Get current full HTML with updated embedded data
+  const html = '<!DOCTYPE html>' + document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pvc_calculator.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function saveData() {
+  const d = getData();
+  const name = d.mixName.trim();
+  if (!name) { showToast('⚠️ اكتب اسم الخلطة الأول'); return; }
+  const mixes = getAllMixes();
+  const isUpdate = !!mixes[name];
+  const msg = isUpdate
+    ? `هتحدّث خلطة "${name}" الموجودة — متأكد؟`
+    : `هتحفظ خلطة جديدة باسم "${name}" — متأكد؟`;
+  if (!confirm(msg)) return;
+  const now = new Date().toLocaleString('ar-EG');
+  if (isUpdate) {
+    d.createdAt  = mixes[name].createdAt || now;
+    d.updatedAt  = now;
+  } else {
+    d.createdAt  = now;
+    d.updatedAt  = now;
+  }
+  mixes[name] = d;
+  setAllMixes(mixes);
+  renderMixList();
+  showToast(`✅ تم حفظ "${name}"`);
+}
+
+function loadMix(name) {
+  const mixes = getAllMixes();
+  const d = mixes[name];
+  if (!d) return;
+  document.getElementById('mixName').value    = d.mixName || name;
+  document.getElementById('batchKg').value    = d.batchKg || 100;
+  document.getElementById('margin').value     = d.margin ?? 15;
+  document.getElementById('depreciation').value = d.depreciation ?? 1;
+  document.getElementById('mfgCost').value    = d.mfgCost ?? 5000;
+  document.getElementById('tbody').innerHTML  = '';
+  (d.ingredients || []).forEach(i => addRow(i.name, i.phr, i.price));
+  showToast(`📂 تم تحميل "${name}"`);
+}
+
+function duplicateMix(name) {
+  const mixes = getAllMixes();
+  const d = mixes[name];
+  if (!d) return;
+  // Generate unique name automatically: "name - نسخة", "name - نسخة 2", etc.
+  let newName = name + ' - نسخة';
+  let counter = 2;
+  while (mixes[newName]) { newName = name + ' - نسخة ' + counter; counter++; }
+  const now = new Date().toLocaleString('ar-EG');
+  mixes[newName] = { ...JSON.parse(JSON.stringify(d)), mixName: newName, createdAt: now, updatedAt: now };
+  setAllMixes(mixes);
+  renderMixList();
+  showToast(`📋 تم تكرار "${name}"`);
+}
+
+function showDetails(name) {
+  const mixes = getAllMixes();
+  const d = mixes[name];
+  if (!d) return;
+  const fmt = n => Math.round(parseFloat(n)||0).toLocaleString('ar-EG');
+  const totalPhr = (d.ingredients||[]).reduce((s,i)=>s+(parseFloat(i.phr)||0),0);
+  let wCost = 0;
+  (d.ingredients||[]).forEach(i=>{ wCost += (parseFloat(i.phr)||0)*(parseFloat(i.price)||0); });
+  const costKg   = totalPhr > 0 ? wCost/totalPhr : 0;
+  const rawTon   = costKg * 1000;
+  const dep      = rawTon * ((parseFloat(d.depreciation)||0)/100);
+  const mfg      = parseFloat(d.mfgCost)||0;
+  const finalTon = rawTon + dep + mfg;
+
+  // Ingredients table - 3 separate columns
+  const ingTable = `
+    <table style="width:100%; border-collapse:collapse; margin-top:6px; font-size:0.83rem;">
+      <thead>
+        <tr style="border-bottom:1px solid #2e3a50;">
+          <th style="text-align:right; padding:5px 4px; color:#7dd3fc; font-weight:600; width:50%;">المكوّن</th>
+          <th style="text-align:center; padding:5px 4px; color:#7dd3fc; font-weight:600; width:25%;">PHR</th>
+          <th style="text-align:center; padding:5px 4px; color:#7dd3fc; font-weight:600; width:25%;">ج.م/كجم</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${(d.ingredients||[]).map(i=>`
+        <tr style="border-bottom:1px solid #2e3a5033;">
+          <td style="padding:6px 4px; color:#e0e6f0;">${i.name||'—'}</td>
+          <td style="padding:6px 4px; color:#fbbf24; text-align:center;">${parseFloat(i.phr||0).toFixed(2)}</td>
+          <td style="padding:6px 4px; color:#34d399; text-align:center;">${parseFloat(i.price||0).toFixed(2)}</td>
+        </tr>`).join('')}
+        <tr style="border-top:2px solid #2e3a50;">
+          <td style="padding:6px 4px; color:#94a3b8; font-weight:600;">الإجمالي</td>
+          <td style="padding:6px 4px; color:#fbbf24; text-align:center; font-weight:700;">${totalPhr.toFixed(2)}</td>
+          <td style="padding:6px 4px;"></td>
+        </tr>
+      </tbody>
+    </table>`;
+
+  document.getElementById('detailModalTitle').textContent = '📋 ' + name;
+  document.getElementById('detailModalContent').innerHTML = `
+    <div class="modal-section">📅 التواريخ</div>
+    <div class="modal-row"><span class="modal-key">تاريخ الإنشاء</span><span class="modal-val">${d.createdAt||'—'}</span></div>
+    <div class="modal-row"><span class="modal-key">آخر تعديل</span><span class="modal-val">${d.updatedAt||'—'}</span></div>
+
+    <div class="modal-section">⚗️ مكونات الخلطة</div>
+    ${ingTable}
+
+    <div class="modal-section" style="margin-top:14px;">💰 التكلفة</div>
+    <div class="modal-row"><span class="modal-key">تكلفة كجم الخامات</span><span class="modal-val">${costKg.toFixed(2)} ج.م</span></div>
+    <div class="modal-row"><span class="modal-key">إهلاك (${d.depreciation||1}%)</span><span class="modal-val">${fmt(dep)} ج.م/طن</span></div>
+    <div class="modal-row"><span class="modal-key">تكلفة تصنيع</span><span class="modal-val">${fmt(mfg)} ج.م/طن</span></div>
+    <div style="background:#0d1f3566; border-radius:8px; padding:10px; margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="color:#34d399; font-weight:700; font-size:0.9rem;">سعر الطن النهائي</span>
+      <span style="color:#34d399; font-size:1.2rem; font-weight:800;">${fmt(finalTon)} ج.م</span>
+    </div>
+  `;
+  const modal = document.getElementById('detailModal');
+  modal.style.display = 'block';
+  modal.scrollTop = 0;
+}
+
+function closeModal(e) {
+  if (e.target.id === 'detailModal') e.target.style.display = 'none';
+}
+function closeDetailModal() {
+  document.getElementById('detailModal').style.display = 'none';
+}
+
+function deleteMix(name) {
+  if (!confirm(`هتحذف خلطة "${name}"؟`)) return;
+  const mixes = getAllMixes();
+  delete mixes[name];
+  setAllMixes(mixes);
+  renderMixList();
+  showToast(`🗑️ تم حذف "${name}"`);
+}
+
+function decodeName(enc) {
+  return decodeURIComponent(escape(atob(enc)));
+}
+
+function mixAction(action, enc) {
+  const name = decodeName(enc);
+  if      (action === 'info') showDetails(name);
+  else if (action === 'load') loadMix(name);
+  else if (action === 'dup')  duplicateMix(name);
+  else if (action === 'del')  deleteMix(name);
+}
+
+function renderMixList() {
+  const mixes = getAllMixes();
+  const keys  = Object.keys(mixes);
+  const list  = document.getElementById('mixList');
+  if (keys.length === 0) {
+    list.innerHTML = '<div class="empty-msg">لا توجد خلطات محفوظة بعد</div>';
+    return;
+  }
+  // Use btoa to safely encode names and avoid quote issues on mobile
+  list.innerHTML = keys.map((k) => {
+    const enc = btoa(unescape(encodeURIComponent(k)));
+    return `<div class="mix-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:0.97rem;font-weight:700;color:#e0e6f0;">${k}</span>
+        <button class="btn-mini btn-mini-info" onclick="mixAction('info','${enc}')" title="تفاصيل">ℹ تفاصيل</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn-mini btn-mini-load" onclick="mixAction('load','${enc}')" style="flex:1;">تحميل</button>
+        <button class="btn-mini btn-mini-dup"  onclick="mixAction('dup','${enc}')"  style="flex:1;">تكرار ⧉</button>
+        <button class="btn-mini btn-mini-del"  onclick="mixAction('del','${enc}')"  style="flex:1;">حذف</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function clearAll() {
+  if (!confirm('هتمسح الخلطة الحالية من الشاشة؟')) return;
+  document.getElementById('tbody').innerHTML = '';
+  document.getElementById('mixName').value = '';
+  calculate();
+}
+
+function exportCSV() {
+  const d = getData();
+  let csv = 'المكوّن,PHR,السعر/كجم\n';
+  d.ingredients.forEach(i => { csv += `"${i.name}",${i.phr},${i.price}\n`; });
+  csv += `\nاسم الخلطة,${d.mixName}\n`;
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (d.mixName || 'pvc_mix') + '.csv';
+  a.click();
+  showToast('📄 تم تصدير الملف');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ── Init ── */
+defaults.forEach(d => addRow(d.name, d.phr, d.price));
+renderMixList();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error', e));
+  });
+}
+</script>
+</body>
+</html>
