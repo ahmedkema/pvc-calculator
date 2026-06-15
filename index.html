@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="خلطة PVC">
 <link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>حاسبة تكلفة خلطة PVC</title>
 <style>
@@ -351,8 +352,8 @@
   <div style="text-align:center;">
     <div style="font-size:0.82rem; color:#64748b; margin-bottom:6px;">💰 سعر طن الخامة</div>
     <div id="finalTonPrice" style="font-size:2.4rem; font-weight:800; color:#34d399; letter-spacing:1px;">0 ج.م</div>
-    <div id="priceMixName" style="font-size:0.85rem; color:#7dd3fc; margin-top:6px; font-weight:600;"></div>
-    <div id="priceDate" style="font-size:0.75rem; color:#64748b; margin-top:2px;"></div>
+    <div id="priceMixName" style="font-size:1rem; color:#e0e6f0; margin-top:10px; font-weight:700; letter-spacing:0.5px;"></div>
+    <div id="priceDate" style="font-size:0.82rem; color:#7dd3fc; margin-top:4px; font-weight:500;"></div>
   </div>
 </div>
 
@@ -407,9 +408,14 @@
 <!-- Details modal -->
 <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
   <div class="modal-box" id="detailModalBox">
-    <div class="modal-title" id="detailModalTitle">تفاصيل الخلطة</div>
-    <div id="detailModalContent"></div>
-    <button class="btn-modal-close" onclick="closeDetailModal()">إغلاق</button>
+    <div id="detailCapture" style="background:#242b3d; padding:4px 0 8px;">
+      <div class="modal-title" id="detailModalTitle">تفاصيل الخلطة</div>
+      <div id="detailModalContent"></div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn-modal-close" style="flex:1;" onclick="shareAsImage()">📸 مشاركة كصورة</button>
+      <button class="btn-modal-close" style="flex:1;" onclick="closeDetailModal()">إغلاق</button>
+    </div>
   </div>
 </div>
 
@@ -656,6 +662,47 @@ function showDetails(name) {
   const modal = document.getElementById('detailModal');
   modal.style.display = 'block';
   modal.scrollTop = 0;
+}
+
+function shareAsImage() {
+  const el = document.getElementById('detailCapture');
+  // Temporarily expand for full capture
+  const modalBox = document.getElementById('detailModalBox');
+  const origOverflow = modalBox.style.overflow;
+  const origMaxHeight = modalBox.style.maxHeight;
+  modalBox.style.overflow = 'visible';
+  modalBox.style.maxHeight = 'none';
+
+  html2canvas(el, {
+    backgroundColor: '#242b3d',
+    scale: 2,
+    useCORS: true,
+    scrollY: 0,
+    windowWidth: el.scrollWidth,
+    height: el.scrollHeight
+  }).then(canvas => {
+    modalBox.style.overflow = origOverflow;
+    modalBox.style.maxHeight = origMaxHeight;
+
+    canvas.toBlob(blob => {
+      // Try Web Share API first (mobile)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'خلطة.png', { type: 'image/png' })] })) {
+        navigator.share({
+          files: [new File([blob], 'خلطة.png', { type: 'image/png' })],
+          title: 'تفاصيل الخلطة'
+        }).catch(() => downloadImage(canvas));
+      } else {
+        downloadImage(canvas);
+      }
+    }, 'image/png');
+  });
+}
+
+function downloadImage(canvas) {
+  const a = document.createElement('a');
+  a.download = 'خلطة.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
 }
 
 function closeModal(e) {
