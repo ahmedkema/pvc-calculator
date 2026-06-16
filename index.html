@@ -666,36 +666,48 @@ function showDetails(name) {
 
 function shareAsImage() {
   const el = document.getElementById('detailCapture');
-  // Temporarily expand for full capture
   const modalBox = document.getElementById('detailModalBox');
-  const origOverflow = modalBox.style.overflow;
-  const origMaxHeight = modalBox.style.maxHeight;
+  const modal = document.getElementById('detailModal');
+
+  // Save original styles
+  const orig = {
+    overflow: modalBox.style.overflow,
+    maxHeight: modalBox.style.maxHeight,
+    position: modal.style.position,
+    top: modal.style.top
+  };
+
+  // Expand fully for capture
   modalBox.style.overflow = 'visible';
   modalBox.style.maxHeight = 'none';
 
-  html2canvas(el, {
-    backgroundColor: '#242b3d',
-    scale: 2,
-    useCORS: true,
-    scrollY: 0,
-    windowWidth: el.scrollWidth,
-    height: el.scrollHeight
-  }).then(canvas => {
-    modalBox.style.overflow = origOverflow;
-    modalBox.style.maxHeight = origMaxHeight;
+  // Let layout settle then capture
+  setTimeout(() => {
+    const fullH = el.scrollHeight + 20;
+    html2canvas(el, {
+      backgroundColor: '#242b3d',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: el.offsetWidth,
+      height: fullH,
+      windowWidth: document.documentElement.scrollWidth
+    }).then(canvas => {
+      // Restore
+      modalBox.style.overflow = orig.overflow;
+      modalBox.style.maxHeight = orig.maxHeight;
 
-    canvas.toBlob(blob => {
-      // Try Web Share API first (mobile)
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'خلطة.png', { type: 'image/png' })] })) {
-        navigator.share({
-          files: [new File([blob], 'خلطة.png', { type: 'image/png' })],
-          title: 'تفاصيل الخلطة'
-        }).catch(() => downloadImage(canvas));
-      } else {
-        downloadImage(canvas);
-      }
-    }, 'image/png');
-  });
+      canvas.toBlob(blob => {
+        const file = new File([blob], 'خلطة.png', { type: 'image/png' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: 'تفاصيل الخلطة' })
+            .catch(() => downloadImage(canvas));
+        } else {
+          downloadImage(canvas);
+        }
+      }, 'image/png');
+    });
+  }, 100);
 }
 
 function downloadImage(canvas) {
