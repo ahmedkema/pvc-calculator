@@ -335,6 +335,7 @@
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
+  <datalist id="rawMaterialsList"></datalist>
   </table>
   <button class="btn-add" onclick="addRow()">+ إضافة مكوّن</button>
 </div>
@@ -348,8 +349,9 @@
 <input type="hidden" id="profitAmt">
 
 <!-- Final ton price only -->
-<div class="result-card">
-  <div style="text-align:center;">
+<div class="result-card" style="position:relative;">
+  <button onclick="sharePriceBox()" title="مشاركة السعر" style="position:absolute;top:10px;left:10px;background:#1e3a5f;border:1px solid #7dd3fc55;border-radius:8px;color:#7dd3fc;font-size:0.8rem;cursor:pointer;padding:5px 10px;">📤 إرسال</button>
+  <div id="priceBox" style="text-align:center; padding: 10px 0 4px;">
     <div style="font-size:0.82rem; color:#64748b; margin-bottom:6px;">💰 سعر طن الخامة</div>
     <div id="finalTonPrice" style="font-size:2.4rem; font-weight:800; color:#34d399; letter-spacing:1px;">0 ج.م</div>
     <div id="priceMixName" style="font-size:1rem; color:#e0e6f0; margin-top:10px; font-weight:700; letter-spacing:0.5px;"></div>
@@ -438,13 +440,36 @@ function toggleSecret() {
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
 }
 
+/* ── Raw materials list ── */
+function getRawMaterials() {
+  try { return JSON.parse(localStorage.getItem('pvcRawMaterials')) || []; }
+  catch { return []; }
+}
+function saveRawMaterial(name) {
+  if (!name.trim()) return;
+  const list = getRawMaterials();
+  if (!list.includes(name.trim())) {
+    list.push(name.trim());
+    localStorage.setItem('pvcRawMaterials', JSON.stringify(list));
+    updateDatalist();
+  }
+}
+function updateDatalist() {
+  const list = getRawMaterials();
+  const dl = document.getElementById('rawMaterialsList');
+  if (dl) dl.innerHTML = list.map(n => `<option value="${n}">`).join('');
+}
+
 /* ── Table rows ── */
 function addRow(name='', phr='', price='') {
   const tbody = document.getElementById('tbody');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td class="col-name"><input type="text" placeholder="اسم المكوّن" value="${name}" oninput="calculate()"></td>
-    <td class="col-phr"><input type="number" placeholder="0" value="${phr}" min="0" step="0.01" oninput="calculate()"></td>
+    <td class="col-name">
+      <input type="text" placeholder="اسم المكوّن" value="${name}" list="rawMaterialsList"
+        oninput="calculate()" onblur="saveRawMaterial(this.value)">
+    </td>
+    <td class="col-phr"><input type="number" placeholder="0" value="${phr}" min="0" step="0.001" oninput="calculate()"></td>
     <td class="col-price"><input type="number" placeholder="0.00" value="${price}" min="0" step="0.01" oninput="calculate()"></td>
     <td class="col-del"><button class="btn-del" onclick="delRow(this)" title="حذف">✕</button></td>
   `;
@@ -558,6 +583,8 @@ function saveData() {
     d.createdAt  = now;
     d.updatedAt  = now;
   }
+  // Save ingredient names to raw materials list
+  (d.ingredients||[]).forEach(i => saveRawMaterial(i.name));
   mixes[name] = d;
   setAllMixes(mixes);
   renderMixList();
@@ -662,6 +689,28 @@ function showDetails(name) {
   const modal = document.getElementById('detailModal');
   modal.style.display = 'block';
   modal.scrollTop = 0;
+}
+
+function sharePriceBox() {
+  const el = document.getElementById('priceBox');
+  html2canvas(el, {
+    backgroundColor: '#1a3a5c',
+    scale: 3,
+    useCORS: true,
+    logging: false,
+    width: el.offsetWidth,
+    height: el.scrollHeight + 10
+  }).then(canvas => {
+    canvas.toBlob(blob => {
+      const file = new File([blob], 'سعر-الطن.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'سعر طن الخامة' })
+          .catch(() => downloadImage(canvas));
+      } else {
+        downloadImage(canvas);
+      }
+    }, 'image/png');
+  });
 }
 
 function shareAsImage() {
@@ -831,6 +880,7 @@ function showToast(msg) {
 }
 
 /* ── Init ── */
+updateDatalist();
 defaults.forEach(d => addRow(d.name, d.phr, d.price));
 renderMixList();
 </script>
